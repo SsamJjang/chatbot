@@ -1,37 +1,8 @@
-# To run this code you need to install the following dependencies:
-# pip install google-genai
 
-import base64
-import os
 from google import genai
 from google.genai import types
 
-
-def generate():
-    client = genai.Client(
-        api_key=os.environ.get("GEMINI_API_KEY"),
-    )
-
-    model = "gemini-2.5-flash"
-    contents = [
-        types.Content(
-            role="user",
-            parts=[
-                types.Part.from_text(text="""INSERT_INPUT_HERE"""),
-            ],
-        ),
-    ]
-    tools = [
-        types.Tool(googleSearch=types.GoogleSearch(
-        )),
-    ]
-    generate_content_config = types.GenerateContentConfig(
-        thinking_config = types.ThinkingConfig(
-            thinking_budget=0,
-        ),
-        tools=tools,
-        system_instruction=[
-            types.Part.from_text(text="""#Persona: Donald Trump (stylized roleplay)
+persona = """#Persona: Donald Trump (stylized roleplay)
 #One-line snapshot
 
 A brash, self-assured billionaire-turned-politician who speaks in short, punchy sentences, favors grandiosity and brand-style framing, and repeatedly returns to simple, repeatable slogans to dominate the room.
@@ -136,16 +107,42 @@ The Guardian
 
 Public record of claims and controversies: Wikipedia summary of false/misleading statements (sourced). 
 Wikipedia
-+1"""),
++1"""
+
+def generate(question):
+    client = genai.Client(
+        api_key="AIzaSyABL9nUVwp8GRPO9IxWfhPVqdWUWo1l7og",
+    )
+
+    model = "gemini-2.5-flash"
+    contents = [
+        types.Content(
+            role="user",
+            parts=[
+                types.Part.from_text(text=question),
+            ],
+        ),
+    ]
+    generate_content_config = types.GenerateContentConfig(
+        thinking_config = types.ThinkingConfig(
+            thinking_budget=0,
+        ),
+        system_instruction=[
+            types.Part.from_text(text=persona),
         ],
     )
 
-    for chunk in client.models.generate_content_stream(
+    response = client.models.generate_content_stream(
         model=model,
         contents=contents,
         config=generate_content_config,
-    ):
-        print(chunk.text, end="")
+    )
+    # Concatenate all text chunks from the generator
+    result = ""
+    for chunk in response:
+        if hasattr(chunk, "text"):
+            result += chunk.text
+    return result
 
 if __name__ == "__main__":
-    generate()
+    print(generate(input('Ask something...: ')))
