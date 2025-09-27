@@ -2,6 +2,28 @@
 import streamlit as st
 from gemini import generate
 
+from dotenv import load_dotenv
+from elevenlabs.client import ElevenLabs
+import os
+
+load_dotenv()
+
+elevenlabs = ElevenLabs(
+    api_key=os.getenv("ELEVENLABS_API_KEY"),
+)
+
+def tts(text):
+    audio = elevenlabs.text_to_speech.convert(
+            text=text,
+            voice_id="qAZH0aMXY8tw1QufPN0D",
+            model_id="eleven_multilingual_v2",
+            output_format="mp3_44100_128",
+    )
+
+    with open("eleven_output.mp3","wb") as f:
+        for chunk in audio:
+            f.write(chunk)
+
 st.set_page_config(page_title="Gemini Royal Chatbot", page_icon="👑", layout="centered")
 
 # Custom CSS for luxury aesthetics
@@ -98,6 +120,12 @@ if st.button("Send to the Throne") and user_input:
         response = generate(history)
         st.session_state["messages"].append({"role": "user", "content": user_input})
         st.session_state["messages"].append({"role": "bot", "content": response})
+
+        # Convert Gemini response to speech
+        tts(response)
+
+        # Play the generated audio in the browser
+        st.audio("eleven_output.mp3", format="audio/mp3")
 
 if st.session_state["messages"]:
     st.markdown('<h3 style="color:#FFD700;text-shadow:0 0 10px #e6b800;">Royal Chat History</h3>', unsafe_allow_html=True)

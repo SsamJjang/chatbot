@@ -1,2 +1,5 @@
 google-genai
 google
+streamlit
+elevenlabs
+python-dotenv
